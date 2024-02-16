@@ -11,7 +11,7 @@ const connection_test = () => {
 }
 
 // const ws_address = `ws://localhost`
-const ws_address = `wss://cold-eagle-12.deno.dev`
+const ws_address = `wss://healthy-hedgehog-66.deno.dev`
 
 console.log (`attempting websocket at ${ ws_address }`)
 

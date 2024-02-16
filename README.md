@@ -1,2 +1,2 @@
-# ds_template
-distributed synthesis template, using Deno.kv &amp; websockets
+# singing_tea_prototype
+distributed synthesis instrument for gongfu
