@@ -9,7 +9,16 @@ const server_id = {
 }
 
 const sockets = new Map ()
+
 let ctrl = false
+let is_playing = false
+
+const state = {
+   x: 1, 
+   y: 0.5,
+   is_playing: false,
+}
+
 const kv = await Deno.openKv ()
 
 const update_ctrl = async () => {
@@ -97,6 +106,7 @@ const manage_ctrl  = async (msg, id) => {
       pong: () => manage_pong (msg, id),
       override: async () => {
          console.log (`override: ${ msg.content }`)
+         console.dir (ctrl)
          ctrl.socket.send (JSON.stringify ({
             method  : `kick`,
             content : id.name,
@@ -110,7 +120,19 @@ const manage_ctrl  = async (msg, id) => {
          kv.set ([ id.type, id.no ], { id, ping })
          update_ctrl ()
       },
+      upstate: async () => {
+         console.log (`upstate`)
+         Object.assign (state, msg.content)
+         sockets.forEach (s => {
+            if (s.id.type != `synth` || s.socket.readyState != 1) return
+            s.socket.send (JSON.stringify ({
+               method  : `upstate`,
+               content : state,
+            }))
+         })
+      },
    }
+   console.log (`ctrl method: ${ msg.method }`) 
    manage_method[msg.method] ()
 }
 
@@ -185,6 +207,7 @@ const req_handler = async incoming_req => {
             synth   : () => manage_synth (msg, id),
             ctrl    : () => manage_ctrl  (msg, id),
          }
+         console.log (msg.type)
          manage_type[msg.type] ()
       }
       socket.onerror = e => console.log(`socket error: ${ e.message }`)

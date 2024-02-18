@@ -8,6 +8,10 @@ let phase = `connecting`
 let override_hold = false
 
 const id = {}
+let all_clear = true
+
+const give_all_clear = () => { all_clear = true }
+const wait_for_clear = () => { all_clear = false; setTimeout (give_all_clear, 200) }
 
 socket.onmessage = m => {
    const { method, content } = JSON.parse (m.data)
@@ -19,9 +23,10 @@ socket.onmessage = m => {
          console.log (`name: ${ content.name }`)
       },
       list: () => {
+         phase  = `connected`
 
          bg_col = `indigo`
-         phase  = `connected`
+         background ()
 
          socket_list.innerText = ``
 
@@ -79,10 +84,13 @@ socket.onmessage = m => {
          text_div.innerText = `${ content } is already connected 😠`
          socket_list.appendChild (text_div)
 
+         draw_frame ()
+
       },
       kick: () => {
          phase = `kicked`
          bg_col = `crimson`
+         background ()
 
          socket_list.innerText = ``
 
@@ -129,15 +137,77 @@ cnv.height = innerHeight
 
 const ctx = cnv.getContext (`2d`)
 
-document.body.onpointerdown = () => {
+let pointer_down = false
+
+const draw_square = e => {
+   ctx.fillStyle = `lime`
+   ctx.fillRect (e.clientX - 50, e.clientY - 50, 100, 100)
+}
+
+document.body.onpointerdown = e => {
    if (phase == `busy`) {
       override_hold = Date.now ()
    }
+
+   if (phase == `connected`) {
+      pointer_down = true
+
+      socket.send (JSON.stringify ({
+         method: `upstate`,
+         type: `ctrl`,
+         content: {
+            x: e.clientX / innerWidth,
+            y: e.clientY / innerHeight,
+            // id: id,
+         }
+      }))
+      background ()
+      draw_square (e)
+   }
 }
+
+document.body.onpointermove = e => {
+   if (pointer_down) {
+      background ()
+
+      const pos = {
+         x: e.x ? e.x : e.touches[0].clientX,
+         y: e.y ? e.y : e.touches[0].clientY
+      }
+
+      draw_square (pos)
+
+      if (all_clear) {
+         socket.send (JSON.stringify ({
+            method: `upstate`,
+            type: `ctrl`,
+            content: {
+               x: pos.x / cnv.width,
+               y: pos.y / cnv.height,
+               is_playing: true,
+            }
+         }))
+         wait_for_clear ()
+      }
+   }
+}
+
+
 
 document.body.onpointerup = () => {
    if (phase == `busy`) {
       override_hold = false
+   }
+   if (phase == `connected`) {
+      pointer_down = false
+      background ()
+      socket.send (JSON.stringify ({
+         method: `upstate`,
+         type: `ctrl`,
+         content: {
+            is_playing: false,
+         }
+      }))
    }
 }
 
@@ -180,7 +250,7 @@ function draw_frame () {
       kicked     : () => {},
    }
    frame_manager[phase] ()
-   requestAnimationFrame (draw_frame)
+   if (phase == `busy`) requestAnimationFrame (draw_frame)
 }
 
 requestAnimationFrame (draw_frame)

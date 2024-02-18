@@ -45,19 +45,29 @@ socket.onmessage = m => {
          }))
       },
 
+      upstate: () => {
+         if (context.state == `running` && content.is_playing) {
+            const pos = {
+               x: content.x * innerWidth,
+               y: content.y * innerHeight,
+            }
+            ctx.fillStyle = `turquoise`
+            ctx.fillRect (pos.x - 50, pos.y - 50, 100, 100)
+         }
+      },
 
       note: () => {
-         // if (audio_context.state == `running`) {
+         // if (context.state == `running`) {
          //    bg_col = `turquoise`
          //    setTimeout (() => bg_col = `deeppink`, msg.content[1] * 1000)
 
-         //    const t = audio_context.currentTime
+         //    const t = context.currentTime
          //    rev_gate.gain.cancelScheduledValues (t)
          //    rev_gate.gain.setValueAtTime (rev_gate.gain.value, t)
          //    const r = ((1 - msg.state.y) ** 12) * 0.4
          //    rev_gate.gain.linearRampToValueAtTime (r, t + msg.content[1])
 
-         //    play_osc (...msg.content, audio_context)
+         //    play_osc (...msg.content, context)
          // }
       }
    }
@@ -114,7 +124,8 @@ document.body.appendChild (text_div)
 document.body.onclick = async () => {
    if (document.body.style.backgroundColor == `black`) {
 
-      await audio_context.resume ()
+      // await context.resume ()
+      await init_audio ()
 
       document.body.style.backgroundColor = bg_col
       text_div.remove ()
@@ -130,7 +141,7 @@ document.body.onclick = async () => {
       name_div.innerText       = synth_info.name
       document.body.appendChild (name_div)
 
-      const audio_enabled = audio_context.state == `running`
+      const audio_enabled = context.state == `running`
       socket.send (JSON.stringify ({
          type    : `synth`,
          method  : `audio_enabled`, 
@@ -143,50 +154,21 @@ document.body.onclick = async () => {
 }
 
 // ~ WEB AUDIO THINGS ~
-const audio_context = new AudioContext ()
-audio_context.suspend ()
 
-// reverbjs.extend (audio_context)
+let context
 
-// const rev_gate = audio_context.createGain ()
-// rev_gate.gain.value = 1
+const init_audio = async () => {
+   context = new AudioContext ()
+   await context.resume ()
+   await context.audioWorklet.addModule (`etc/worklet.js`)
+      .then (() => runTest ())
 
-// const reverb_url = "R1NuclearReactorHall.m4a"
-// const rev = audio_context.createReverbFromUrl (reverb_url, () => {
-//    rev_gate.connect (rev).connect (audio_context.destination)
-// })
+}
 
-// function play_osc (frq, lth, crv, bri, stk, gen, acx) {
-//    if (gen > stk || bri === 0 || frq > 16000) return
-
-//    const t = acx.currentTime
-
-//    const pre = acx.createGain ()
-//    const rev_gen = stk - gen + 1
-//    const vol = Math.max (Math.min (1, bri * rev_gen), 0)
-//    pre.gain.setValueAtTime (vol, t)
-
-//    const amp = acx.createGain ()
-//    amp.gain.setValueAtTime (0, t)
-//    amp.gain.linearRampToValueAtTime (0.4, t + 0.02)
-//    amp.gain.setValueAtTime (0.4, t + lth)
-//    amp.gain.linearRampToValueAtTime (0, t + lth + 0.02)
-//    amp.connect (acx.destination)
-//    amp.connect (rev_gate)
+// const context = new AudioContext ()
+// context.suspend ()
 
 
-//    const osc = acx.createOscillator ()
-//    osc.frequency.setValueAtTime (frq, t)
-//    osc.start (t)
-//    osc.connect (pre)
-//       .connect (amp)
-//    osc.stop (t + lth + 0.2)
-
-//    if (stk > gen) {
-//       const next_bri = (bri - (1 / rev_gen)) * (rev_gen / (rev_gen - 1))
-//       play_osc (frq * gen, lth, crv, next_bri, stk, gen + 1, acx)
-//    }
-// }
 
 cnv.width = innerWidth
 cnv.height = innerHeight
