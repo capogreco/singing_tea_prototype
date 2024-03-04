@@ -1,14 +1,14 @@
 // ~ WEB AUDIO THINGS ~
 
-let context
+let context, synth, amp
 
 const init_audio = async () => {
    context = new AudioContext ()
    await context.resume ()
    await context.audioWorklet.addModule (`etc/worklet.js`)
 
-   const synth = new AudioWorkletNode (context, `test`)
-   const amp  = new GainNode (context, { gain: 0 })
+   synth = new AudioWorkletNode (context, `test`)
+   amp  = new GainNode (context, { gain: 0 })
    synth.connect (amp).connect (context.destination)
       // .then (() => runTest ())
 
@@ -98,9 +98,11 @@ socket.onmessage = m => {
       },
 
       upstate: () => {
+         const t = context.currentTime
          // console.dir (content)
          Object.assign (synth_info, content)
-         if (context.state == `running` && content.is_playing) {
+         if (context.state == `running`) {
+            amp.gain.setValueAtTime (synth_info.is_playing ? 1 : 0, t)
          }
       },
 

@@ -15,7 +15,7 @@ class TestProcessor extends AudioWorkletProcessor {
         return [
             { name: 'time',          defaultValue: 0     },
             { name: 'freq',          defaultValue: 175   },
-            { name: 'amp',           defaultValue: 0.2   },
+            { name: 'amp',           defaultValue: 1     },
             { name: 'vibrato_rate',  defaultValue: 4     },
             { name: 'vibrato_width', defaultValue: 0.1   },
             { name: 'detune_rate',   defaultValue: 6     },
