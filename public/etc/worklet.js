@@ -73,7 +73,8 @@ class TestProcessor extends AudioWorkletProcessor {
 
 
             // this.phasor.frequency = freq * (vibrato_sig + 1) * (noise_sig + 1)
-            this.phasor.frequency = freq * (2 ** vibrato_sig) * (2 ** noise_sig)
+            // this.phasor.frequency = freq * (2 ** vibrato_sig) * (2 ** noise_sig)
+            this.phasor.frequency = freq * (vibrato_sig + 1) * (2 ** noise_sig)
             this.phasor.increment ()
 
             const location = bab_funct.table_locate (freq)
