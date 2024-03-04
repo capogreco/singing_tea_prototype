@@ -21,6 +21,15 @@ const state = {
 
 const kv = await Deno.openKv ()
 
+const delete_kv = async () => {
+   const iter = await kv.list ({ prefix : [] })
+   for await (const { key } of iter) {
+      await kv.delete (key)
+   }
+}
+
+delete_kv ()
+
 const update_ctrl = async () => {
    if (!ctrl) return
    if (ctrl.socket.readyState != 1) return
@@ -106,13 +115,11 @@ const manage_ctrl  = async (msg, id) => {
       pong: () => manage_pong (msg, id),
       override: async () => {
          console.log (`override: ${ msg.content }`)
-         console.dir (ctrl)
          ctrl.socket.send (JSON.stringify ({
             method  : `kick`,
             content : id.name,
          }))
          ctrl = sockets.get (id.no)
-         console.dir (ctrl)
          const ping = {
             time: null,
             last_update: Date.now (),
@@ -121,8 +128,8 @@ const manage_ctrl  = async (msg, id) => {
          update_ctrl ()
       },
       upstate: async () => {
-         console.log (`upstate`)
          Object.assign (state, msg.content)
+         console.dir (state)
          sockets.forEach (s => {
             if (s.id.type != `synth` || s.socket.readyState != 1) return
             s.socket.send (JSON.stringify ({
@@ -132,7 +139,7 @@ const manage_ctrl  = async (msg, id) => {
          })
       },
    }
-   console.log (`ctrl method: ${ msg.method }`) 
+   // console.log (`ctrl method: ${ msg.method }`) 
    manage_method[msg.method] ()
 }
 
@@ -149,7 +156,9 @@ const req_handler = async incoming_req => {
    const path = new URL (req.url).pathname
    const upgrade = req.headers.get ("upgrade") || ""
    if (upgrade.toLowerCase () == "websocket") {
+
       const { socket, response } = Deno.upgradeWebSocket (req)
+
       const id = {
          no   : req.headers.get (`sec-websocket-key`),
          // name : path == `/ctrl` ? `ctrl` : generate_name (`synth`),
@@ -157,17 +166,21 @@ const req_handler = async incoming_req => {
          type : path == `/ctrl` ? `ctrl` : `synth`,
          server : server_id,
       }
+
       const ping = {
          time: null,
          last_update: Date.now (),
       }
+
       const audio_enabled = false
       sockets.set (id.no, { socket, id, ping, audio_enabled })
+
       if (sockets.size == 1) {
          setTimeout (clean_local_sockets, 1000)
       }
-      socket.onopen = async () => {
 
+      socket.onopen = async () => {
+         console.log (`socket opened`)
          socket.send (JSON.stringify ({
             method  : `id`,
             content : id,
@@ -207,7 +220,6 @@ const req_handler = async incoming_req => {
             synth   : () => manage_synth (msg, id),
             ctrl    : () => manage_ctrl  (msg, id),
          }
-         console.log (msg.type)
          manage_type[msg.type] ()
       }
       socket.onerror = e => console.log(`socket error: ${ e.message }`)

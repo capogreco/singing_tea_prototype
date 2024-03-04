@@ -1,5 +1,5 @@
-// const ws_address = `ws://localhost/ctrl`
-const ws_address = `wss://healthy-hedgehog-66.deno.dev/ctrl`
+const ws_address = `ws://localhost/ctrl`
+// const ws_address = `wss://healthy-hedgehog-66.deno.dev/ctrl`
 
 const socket = new WebSocket (ws_address)
 
@@ -151,15 +151,16 @@ document.body.onpointerdown = e => {
 
    if (phase == `connected`) {
       pointer_down = true
-
+      const content = {
+         x: e.clientX / innerWidth,
+         y: e.clientY / innerHeight,
+         is_playing: true,
+      }
+      console.dir (content)
       socket.send (JSON.stringify ({
          method: `upstate`,
          type: `ctrl`,
-         content: {
-            x: e.clientX / innerWidth,
-            y: e.clientY / innerHeight,
-            // id: id,
-         }
+         content
       }))
       background ()
       draw_square (e)
@@ -168,14 +169,14 @@ document.body.onpointerdown = e => {
 
 document.body.onpointermove = e => {
    if (pointer_down) {
+
       background ()
+      draw_square (e)
 
       const pos = {
-         x: e.x ? e.x : e.touches[0].clientX,
-         y: e.y ? e.y : e.touches[0].clientY
+         x: e.clientX ? e.clientX : e.touches[0].clientX,
+         y: e.clientY ? e.clientY : e.touches[0].clientY
       }
-
-      draw_square (pos)
 
       if (all_clear) {
          socket.send (JSON.stringify ({
