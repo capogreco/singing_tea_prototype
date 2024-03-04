@@ -111,11 +111,11 @@ socket.onmessage = m => {
 
             vibrato_rate.cancelScheduledValues (t)
             vibrato_rate.setValueAtTime (vibrato_rate.value, t)
-            vibrato_rate.exponentialRampToValueAtTime (4 * 6 ** synth_info.x, t + 0.02)
+            vibrato_rate.exponentialRampToValueAtTime (4 * (6 ** synth_info.x), t + 0.02)
 
             freq.cancelScheduledValues (t)
             freq.setValueAtTime (freq.value, t)
-            freq.exponentialRampToValueAtTime (80 * 2 ** (1 + (1 - synth_info.y)), t + 0.2)
+            freq.exponentialRampToValueAtTime (80 * (2 ** (1 + (1 - synth_info.y))), t + 0.2)
 
          }
       },
