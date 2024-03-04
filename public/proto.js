@@ -4,7 +4,7 @@ const ws_address = `wss://healthy-hedgehog-66.deno.dev`
 
 // ~ WEB AUDIO THINGS ~
 
-let context, synth, amp
+let context, synth, vibrato_rate, freq, amp
 
 const init_audio = async () => {
    context = new AudioContext ()
@@ -15,6 +15,8 @@ const init_audio = async () => {
    amp  = new GainNode (context, { gain: 0 })
    synth.connect (amp).connect (context.destination)
       // .then (() => runTest ())
+   vibrato_rate = synth.parameters.get (`vibrato_rate`)
+   freq         = synth.parameters.get (`freq`)
 
 }
 
@@ -66,7 +68,6 @@ const connection_test = () => {
    setTimeout (connection_test, 3000)
 }
 
-
 console.log (`attempting websocket at ${ ws_address }`)
 
 const socket = new WebSocket (ws_address)
@@ -104,7 +105,18 @@ socket.onmessage = m => {
          // console.dir (content)
          Object.assign (synth_info, content)
          if (context.state == `running`) {
-            amp.gain.setValueAtTime (synth_info.is_playing ? 1 : 0, t)
+            amp.gain.cancelScheduledValues (t)
+            amp.gain.setValueAtTime (amp.gain.value, t)
+            amp.gain.linearRampToValueAtTime (synth_info.is_playing ? 1 : 0, t + 0.02)
+
+            vibrato_rate.cancelScheduledValues (t)
+            vibrato_rate.setValueAtTime (vibrato_rate.value, t)
+            vibrato_rate.exponentialRampToValueAtTime (4 * 6 ** synth_info.x, t + 0.02)
+
+            freq.cancelScheduledValues (t)
+            freq.setValueAtTime (freq.value, t)
+            freq.exponentialRampToValueAtTime (80 * 2 ** (1 + (1 - synth_info.y)), t + 0.2)
+
          }
       },
 
@@ -160,7 +172,7 @@ document.body.style.overflow = `hidden`
 
 document.body.style.backgroundColor = `black`
 const text_div                = document.createElement (`div`)
-text_div.innerText            = `tap to join the distributed arpeggiator instrument`
+text_div.innerText            = `tap to join`
 text_div.style.font           = `italic bolder 80px sans-serif`
 text_div.style.color          = `white`
 text_div.style.display        = `flex`
