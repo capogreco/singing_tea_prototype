@@ -1,5 +1,5 @@
-const ws_address = `ws://localhost/ctrl`
-// const ws_address = `wss://healthy-hedgehog-66.deno.dev/ctrl`
+// const ws_address = `ws://localhost/ctrl`
+const ws_address = `wss://healthy-hedgehog-66.deno.dev/ctrl`
 
 const socket = new WebSocket (ws_address)
 

@@ -1,3 +1,7 @@
+// const ws_address = `ws://localhost`
+const ws_address = `wss://healthy-hedgehog-66.deno.dev`
+
+
 // ~ WEB AUDIO THINGS ~
 
 let context, synth, amp
@@ -62,8 +66,6 @@ const connection_test = () => {
    setTimeout (connection_test, 3000)
 }
 
-const ws_address = `ws://localhost`
-// const ws_address = `wss://healthy-hedgehog-66.deno.dev`
 
 console.log (`attempting websocket at ${ ws_address }`)
 
